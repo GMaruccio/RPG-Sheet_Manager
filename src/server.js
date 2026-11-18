@@ -1,5 +1,5 @@
 const path = require('path');
-const { buildApp } = require('./app');
+const { buildApp } = require('./app-factory');
 const { createStore } = require('./store');
 
 const port = process.env.PORT || 3000;

@@ -1,5 +1,5 @@
 const autocannon = require('autocannon');
-const { buildApp } = require('../../src/app');
+const { buildApp } = require('../../src/app-factory');
 
 // Limites (SLOs) — ajustáveis por variável de ambiente.
 const MAX_P99_MS = Number(process.env.PERF_MAX_P99_MS || 200);

@@ -19,8 +19,10 @@ A aplicação em si é simples de propósito: ela serve de "objeto de teste" par
 ├── src/
 │   ├── character.js             # Regras do D&D (modificadores, PV, proficiência, 4d6)
 │   ├── store.js                 # Armazenamento das fichas (memória ou arquivo JSON)
-│   ├── app.js                   # API REST (Express)
-│   └── server.js                # Inicialização do servidor
+│   ├── app-factory.js           # Fábrica da API REST (Express)
+│   └── server.js                # Inicialização do servidor local
+├── api/index.js                 # Entrada serverless da Vercel
+├── vercel.json                  # Redireciona as requisições para a Function
 ├── public/index.html            # Interface web do CRUD
 ├── tests/
 │   ├── unit/                    # 🧪 Testes unitários
@@ -145,8 +147,6 @@ Exemplo do resumo gerado:
 | 🚀 Performance | 2 | 2 | 0 | 🟢 OK |
 
 ---
-
-## 🎲 Sobre a aplicação (objeto de teste)
 
 ### Rodando localmente
 ```bash

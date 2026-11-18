@@ -2,7 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const request = require('supertest');
-const { buildApp } = require('../../src/app');
+const { buildApp } = require('../../src/app-factory');
 const { createStore } = require('../../src/store');
 
 const valid = {
