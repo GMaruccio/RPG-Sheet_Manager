@@ -37,7 +37,7 @@
 </head>
 <body>
 <header>
-  <h1>⚔️ Fichas de Personagem D&amp;D</h1>
+  <h1>Fichas de Personagem D&amp;D</h1>
   <button id="new">+ Nova ficha</button>
 </header>
 <main>
@@ -94,12 +94,12 @@ async function showCharacter(id) {
       el('div', {}, el('b', { textContent: a.toUpperCase() }), el('br'),
         document.createTextNode(`${c.abilities[a]} (${sign(c.modifiers[a])})`)))),
     el('div', { className: 'stats' },
-      el('span', { textContent: `❤️ PV ${c.hitPoints}` }),
-      el('span', { textContent: `🛡️ CA ${c.armorClass}` }),
-      el('span', { textContent: `⚡ Iniciativa ${sign(c.initiative)}` }),
-      el('span', { textContent: `⭐ Proficiência +${c.proficiencyBonus}` })),
+      el('span', { textContent: ` PV ${c.hitPoints}` }),
+      el('span', { textContent: ` CA ${c.armorClass}` }),
+      el('span', { textContent: ` Iniciativa ${sign(c.initiative)}` }),
+      el('span', { textContent: ` Proficiência +${c.proficiencyBonus}` })),
     el('div', { className: 'actions' },
-      el('button', { textContent: '✏️ Editar', onclick: () => showForm(c) }),
+      el('button', { textContent: ' Editar', onclick: () => showForm(c) }),
       el('button', { className: 'danger', textContent: '🗑️ Excluir', onclick: () => removeCharacter(c) })));
   refreshList();
 }
