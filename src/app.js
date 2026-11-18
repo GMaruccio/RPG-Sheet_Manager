@@ -52,4 +52,7 @@ function buildApp({ store = createStore() } = {}) {
   return app;
 }
 
-module.exports = { buildApp };
+const app = buildApp();
+
+module.exports = app;
+module.exports.buildApp = buildApp;
