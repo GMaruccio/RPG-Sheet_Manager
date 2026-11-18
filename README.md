@@ -146,25 +146,6 @@ Exemplo do resumo gerado:
 
 ---
 
-## 🚀 Publicando no GitHub
-
-```bash
-git init
-git add .
-git commit -m "Projeto fichas D&D com testes e CI"
-git branch -M main
-git remote add origin https://github.com/<seu-usuario>/<seu-repositorio>.git
-git push -u origin main
-```
-
-O `.gitignore` já exclui `node_modules/`, `results/`, `coverage/` e `data/` (suas fichas salvas). O `package-lock.json` **deve** ser enviado, pois o `npm ci` da pipeline depende dele.
-
-Depois do push, abra a aba **Actions** para acompanhar a primeira execução. Troque `<seu-usuario>/<seu-repositorio>` no badge do topo deste README.
-
-> 💡 **Para ver a pipeline falhar (demonstração):** altere um valor esperado em qualquer teste, faça push na `main` e observe a suíte correspondente ficar 🔴 no Summary, com as demais ainda executando.
-
----
-
 ## 🎲 Sobre a aplicação (objeto de teste)
 
 ### Rodando localmente
