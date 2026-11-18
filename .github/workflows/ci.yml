@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Instalar, testar e reportar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes unitários
+        id: unit
+        run: npm run test:unit
+        continue-on-error: true
+
+      - name: Testes de integração
+        id: integration
+        run: npm run test:integration
+        continue-on-error: true
+
+      - name: Testes de performance
+        id: performance
+        run: npm run test:performance
+        continue-on-error: true
+
+      - name: Apresentar resultados (Summary)
+        if: always()
+        run: npm run summary
+        continue-on-error: true
+
+      - name: Publicar relatórios como artefato
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-de-teste
+          path: results/
+
+      - name: Falhar a pipeline se algum teste falhou
+        if: steps.unit.outcome == 'failure' || steps.integration.outcome == 'failure' || steps.performance.outcome == 'failure'
+        run: |
+          echo "Unit: ${{ steps.unit.outcome }} | Integração: ${{ steps.integration.outcome }} | Performance: ${{ steps.performance.outcome }}"
+          exit 1

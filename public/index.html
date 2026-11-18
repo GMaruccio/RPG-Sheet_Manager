@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fichas D&amp;D</title>
+<style>
+  :root{--red:#7a1f1f;--paper:#fffaf0;--bg:#f4ecd8;--ink:#2b1d0e}
+  *{box-sizing:border-box}
+  body{font-family:Georgia,serif;margin:0;background:var(--bg);color:var(--ink)}
+  header{background:var(--red);color:#fff;padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center}
+  header h1{margin:0;font-size:1.4rem}
+  main{display:grid;grid-template-columns:280px 1fr;gap:1.5rem;max-width:960px;margin:1.5rem auto;padding:0 1rem}
+  @media(max-width:700px){main{grid-template-columns:1fr}}
+  button,input,select{font:inherit;padding:.45rem .6rem}
+  button{background:var(--red);color:#fff;border:0;cursor:pointer;border-radius:3px}
+  button.ghost{background:transparent;color:var(--red);border:1px solid var(--red)}
+  button.danger{background:#444}
+  header button{background:#fff;color:var(--red)}
+  .card{background:var(--paper);border:2px solid var(--red);padding:1rem;border-radius:4px}
+  #list{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+  #list li{background:var(--paper);border:1px solid var(--red);padding:.6rem;border-radius:4px;cursor:pointer}
+  #list li.active{outline:3px solid var(--red)}
+  #list small{display:block;opacity:.75}
+  form{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+  label{display:flex;flex-direction:column;font-size:.85rem}
+  .full{grid-column:1/-1}
+  .attrs{display:grid;grid-template-columns:repeat(6,1fr);gap:.4rem;text-align:center}
+  .attrs>div,.attrs>label{border:1px solid var(--red);padding:.3rem;background:#fff}
+  .attrs input{width:100%}
+  .actions{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+  .stats{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem}
+  .stats span{background:#fff;border:1px solid var(--red);padding:.3rem .6rem;border-radius:3px}
+  .error{color:#b00020;margin:.5rem 0}
+  .empty{opacity:.7;text-align:center;padding:2rem 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔️ Fichas de Personagem D&amp;D</h1>
+  <button id="new">+ Nova ficha</button>
+</header>
+<main>
+  <aside>
+    <ul id="list"></ul>
+    <p id="listEmpty" class="empty" hidden>Nenhuma ficha ainda.<br>Crie a primeira!</p>
+  </aside>
+  <section id="panel" class="card"></section>
+</main>
+
+<script>
+const A = ['str','dex','con','int','wis','cha'];
+const sign = (m) => (m >= 0 ? '+' + m : String(m));
+const $ = (id) => document.getElementById(id);
+let classes = [];
+let selectedId = null;
+
+// helper para criar elementos sem injetar HTML (evita XSS com nomes de ficha)
+function el(tag, props = {}, ...children) {
+  const e = Object.assign(document.createElement(tag), props);
+  children.flat().forEach((c) => e.append(c));
+  return e;
+}
+
+async function api(path, options) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const body = res.status === 204 ? null : await res.json();
+  if (!res.ok) throw new Error(body.error || 'Erro');
+  return body;
+}
+
+async function refreshList() {
+  const chars = await api('/characters');
+  const ul = $('list');
+  ul.replaceChildren();
+  $('listEmpty').hidden = chars.length > 0;
+  chars.forEach((c) => {
+    const li = el('li', { className: c.id === selectedId ? 'active' : '' },
+      el('strong', { textContent: c.name }),
+      el('small', { textContent: `${c.race} ${c.charClass} — nv ${c.level}` }));
+    li.onclick = () => showCharacter(c.id);
+    ul.append(li);
+  });
+}
+
+async function showCharacter(id) {
+  selectedId = id;
+  const c = await api(`/characters/${id}`);
+  const panel = $('panel');
+  panel.replaceChildren(
+    el('h2', { textContent: c.name }),
+    el('p', { textContent: `${c.race} ${c.charClass} — Nível ${c.level}` }),
+    el('div', { className: 'attrs' }, A.map((a) =>
+      el('div', {}, el('b', { textContent: a.toUpperCase() }), el('br'),
+        document.createTextNode(`${c.abilities[a]} (${sign(c.modifiers[a])})`)))),
+    el('div', { className: 'stats' },
+      el('span', { textContent: `❤️ PV ${c.hitPoints}` }),
+      el('span', { textContent: `🛡️ CA ${c.armorClass}` }),
+      el('span', { textContent: `⚡ Iniciativa ${sign(c.initiative)}` }),
+      el('span', { textContent: `⭐ Proficiência +${c.proficiencyBonus}` })),
+    el('div', { className: 'actions' },
+      el('button', { textContent: '✏️ Editar', onclick: () => showForm(c) }),
+      el('button', { className: 'danger', textContent: '🗑️ Excluir', onclick: () => removeCharacter(c) })));
+  refreshList();
+}
+
+function showForm(existing) {
+  const editing = Boolean(existing);
+  selectedId = editing ? existing.id : null;
+  const err = el('div', { className: 'error' });
+
+  const name = el('input', { required: true, value: editing ? existing.name : '' });
+  const race = el('input', { required: true, value: editing ? existing.race : 'Humano' });
+  const level = el('input', { type: 'number', min: 1, max: 20, value: editing ? existing.level : 1 });
+  const charClass = el('select', {}, classes.map((c) => el('option', { value: c, textContent: c })));
+  if (editing) charClass.value = existing.charClass;
+
+  const inputs = Object.fromEntries(A.map((a) =>
+    [a, el('input', { type: 'number', min: 1, max: 30, value: editing ? existing.abilities[a] : 10 })]));
+
+  const rollBtn = el('button', { type: 'button', className: 'ghost', textContent: '🎲 Rolar 4d6' });
+  rollBtn.onclick = async () => {
+    const r = await api('/roll');
+    A.forEach((a) => (inputs[a].value = r[a]));
+  };
+
+  const form = el('form', {},
+    el('label', { className: 'full' }, 'Nome', name),
+    el('label', {}, 'Classe', charClass),
+    el('label', {}, 'Raça', race),
+    el('label', {}, 'Nível', level),
+    el('label', {}, '\u00a0', rollBtn),
+    el('div', { className: 'full attrs' }, A.map((a) => el('label', {}, a.toUpperCase(), inputs[a]))),
+    el('div', { className: 'full' }, err),
+    el('div', { className: 'full actions' },
+      el('button', { type: 'submit', textContent: editing ? 'Salvar alterações' : 'Criar ficha' }),
+      el('button', { type: 'button', className: 'ghost', textContent: 'Cancelar',
+        onclick: () => (editing ? showCharacter(existing.id) : showEmpty()) })));
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: name.value, charClass: charClass.value, race: race.value, level: Number(level.value),
+      abilities: Object.fromEntries(A.map((a) => [a, Number(inputs[a].value)])),
+    };
+    try {
+      const saved = editing
+        ? await api(`/characters/${existing.id}`, { method: 'PUT', body: JSON.stringify(payload) })
+        : await api('/characters', { method: 'POST', body: JSON.stringify(payload) });
+      await showCharacter(saved.id);
+    } catch (ex) {
+      err.textContent = ex.message;
+    }
+  };
+
+  $('panel').replaceChildren(el('h2', { textContent: editing ? 'Editar ficha' : 'Nova ficha' }), form);
+  refreshList();
+}
+
+async function removeCharacter(c) {
+  if (!confirm(`Excluir a ficha de "${c.name}"?`)) return;
+  await api(`/characters/${c.id}`, { method: 'DELETE' });
+  showEmpty();
+}
+
+function showEmpty() {
+  selectedId = null;
+  $('panel').replaceChildren(el('p', { className: 'empty', textContent: 'Selecione uma ficha ou crie uma nova.' }));
+  refreshList();
+}
+
+$('new').onclick = () => showForm(null);
+(async () => { classes = await api('/classes'); showEmpty(); })();
+</script>
+</body>
+</html>
